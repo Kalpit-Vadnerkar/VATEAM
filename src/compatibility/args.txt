@@ -1,0 +1,10 @@
+{
+    "sync_batch_norm": false,
+    "use_point_pillars": false,
+    "n_layer": 8,
+    "use_target_point_image": false,
+    "use_velocity": true,
+    "image_architecture": "resnet34",
+    "lidar_architecture": "resnet18",
+    "backbone": "transFuser"
+} 
