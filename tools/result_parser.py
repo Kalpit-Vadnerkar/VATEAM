@@ -15,6 +15,7 @@ import matplotlib.lines as lines
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--xml', type=str, default='./leaderboard/data/longest6/longest6.xml', help='Routes file.')
+#parser.add_argument('--xml', type=str, default='/home/kvadner/Desktop/VATEAM/Interfuser/routes_town05_long.xml', help='Routes file.')
 parser.add_argument('--results', type=str, default='./results/', help='Folder with json files to be parsed')
 parser.add_argument('--save_dir', type=str, default='./results/parsed/', help='Directory for saving csvs')
 parser.add_argument('--town_maps', type=str, default='./leaderboard/data/town_maps_xodr', help='Directory containing town map images')

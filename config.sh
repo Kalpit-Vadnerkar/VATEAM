@@ -22,6 +22,8 @@ export PYTHONPATH="${CARLA_ROOT}/PythonAPI/carla/":"${SCENARIO_RUNNER_ROOT}":"${
 export DEBUG_CHALLENGE=${DEBUG_CHALLENGE:-0}  # 0 for normal operation, 1 for debug mode
 export RECORD=${RECORD:-0}  # 0 for no recording, 1 for recording
 export RESUME=${RESUME:-0}  # 0 for new run, 1 for resuming from checkpoint
+export DATAGEN=${DATAGEN:-0}  # 0 for normal operation, 1 for data generation mode
+export DEFAULT_MODEL_PATH=${DEFAULT_MODEL_PATH:-"${WORK_DIR}/model_ckpt/models_2022/transfuser"}  # Default path for model checkpoints
 
 # Default evaluation settings
 export SCENARIOS=${SCENARIOS:-"${LEADERBOARD_ROOT}/data/longest6/eval_scenarios.json"}
@@ -64,4 +66,6 @@ echo "LEADERBOARD_ROOT: $LEADERBOARD_ROOT"
 echo "PYTHONPATH: $PYTHONPATH"
 echo "DEBUG_CHALLENGE: $DEBUG_CHALLENGE"
 echo "RECORD: $RECORD"
-echo "RESUME: $RESUME" 
+echo "RESUME: $RESUME"
+echo "DATAGEN: $DATAGEN"
+echo "DEFAULT_MODEL_PATH: $DEFAULT_MODEL_PATH" 

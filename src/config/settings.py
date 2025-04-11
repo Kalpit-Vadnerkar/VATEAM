@@ -45,7 +45,7 @@ class Settings:
             },
             'model': {
                 'type': 'transfuser',
-                'weights_path': 'model_ckpt/model.ckpt',
+                'weights_path': 'model_ckpt/models_2022/transfuser',
                 'input_size': [224, 224],
                 'batch_size': 1,
             },

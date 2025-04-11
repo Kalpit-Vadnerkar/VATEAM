@@ -46,7 +46,7 @@ from leaderboard_config import (
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Run TransFuser evaluation')
-    parser.add_argument('--model-path', type=str, default=os.path.join(os.getenv('WORK_DIR', '.'), 'model_ckpt/models 2022/transfuser'),
+    parser.add_argument('--model-path', type=str, default=os.getenv('DEFAULT_MODEL_PATH'),
                       help='Path to TransFuser model weights')
     parser.add_argument('--routes', type=str, default=DEFAULT_ROUTES,
                       help='Path to routes file')

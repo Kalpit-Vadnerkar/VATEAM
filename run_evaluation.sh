@@ -4,7 +4,7 @@
 source "$(dirname "$0")/config.sh"
 
 # Default values
-MODEL_PATH="${WORK_DIR}/model_ckpt/models 2022/transfuser"
+MODEL_PATH="${WORK_DIR}/model_ckpt/models_2022/transfuser"
 PORT=2000
 TIMEOUT=60
 OUTPUT_DIR="results"
