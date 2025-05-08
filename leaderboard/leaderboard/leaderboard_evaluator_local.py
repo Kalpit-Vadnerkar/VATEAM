@@ -23,8 +23,10 @@ import pkg_resources
 import sys
 import carla
 import signal
+import time
+import random
 
-from srunner.scenariomanager.carla_data_provider import *
+from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 from srunner.scenariomanager.timer import GameTime
 from srunner.scenariomanager.watchdog import Watchdog
 
@@ -35,6 +37,23 @@ from leaderboard.autoagents.agent_wrapper_local import  AgentWrapper, AgentError
 from leaderboard.utils.statistics_manager_local import StatisticsManager
 from leaderboard.utils.route_indexer import RouteIndexer
 
+# Weather preset names mapping for better readability
+WEATHER_PRESET_NAMES = {
+    "ClearNoon": "Clear Noon",
+    "CloudyNoon": "Cloudy Noon",
+    "WetNoon": "Wet Noon",
+    "WetCloudyNoon": "Wet Cloudy Noon",
+    "MidRainyNoon": "Mid Rainy Noon",
+    "HardRainNoon": "Hard Rain Noon",
+    "SoftRainNoon": "Soft Rain Noon",
+    "ClearSunset": "Clear Sunset",
+    "CloudySunset": "Cloudy Sunset",
+    "WetSunset": "Wet Sunset",
+    "WetCloudySunset": "Wet Cloudy Sunset",
+    "MidRainSunset": "Mid Rain Sunset",
+    "HardRainSunset": "Hard Rain Sunset",
+    "SoftRainSunset": "Soft Rain Sunset",
+}
 
 sensors_to_icons = {
     'sensor.camera.rgb':        'carla_camera',
@@ -213,7 +232,7 @@ class LeaderboardEvaluator(object):
         CarlaDataProvider.set_client(self.client)
         CarlaDataProvider.set_world(self.world)
         CarlaDataProvider.set_traffic_manager_port(int(args.trafficManagerPort))
-
+        
         self.traffic_manager.set_synchronous_mode(True)
         self.traffic_manager.set_random_device_seed(int(args.trafficManagerSeed))
 
@@ -226,6 +245,72 @@ class LeaderboardEvaluator(object):
         if CarlaDataProvider.get_map().name != town:
             raise Exception("The CARLA server uses the wrong map!"
                             "This scenario requires to use map {}".format(town))
+
+    def _set_random_weather_preset(self, config=None, preset_name=None):
+        """
+        Set a weather preset from CARLA's available presets
+        
+        Args:
+            config: If provided, update the config.weather with the preset
+            preset_name: If provided, use this specific preset instead of a random one
+        """
+        try:
+            # Find all weather presets available in CARLA
+            weather_presets = CarlaDataProvider.find_weather_presets()
+            
+            if not weather_presets:
+                print("No weather presets found in CARLA!")
+                return
+            
+            # Create a mapping for easier lookup
+            preset_mapping = {}
+            for preset, name in weather_presets:
+                # Store both with and without spaces for flexibility
+                preset_mapping[name] = preset
+                preset_mapping[name.replace(" ", "")] = preset
+            
+            # Get current weather for debugging
+            current_weather = self.world.get_weather()
+            print(f"\033[1m> Before change - current weather values: cloudiness={current_weather.cloudiness}, precipitation={current_weather.precipitation}\033[0m")
+            
+            # If preset name is provided, find that specific preset
+            if preset_name:
+                # Print all available presets for debugging
+                print(f"\033[1m> Available presets: {[name for _, name in weather_presets]}\033[0m")
+                
+                if preset_name in preset_mapping:
+                    preset = preset_mapping[preset_name]
+                    name_for_display = next((name for p, name in weather_presets if p == preset), preset_name)
+                    print(f"\033[1m> Found preset: {preset_name} -> {name_for_display}\033[0m")
+                else:
+                    print(f"\033[91mWeather preset '{preset_name}' not found. Using random preset instead.\033[0m")
+                    # Fall back to random selection
+                    preset, preset_name = random.choice(weather_presets)
+            else:
+                # Select a random preset
+                preset, preset_name = random.choice(weather_presets)
+            
+            # Set the weather in the world
+            self.world.set_weather(preset)
+            
+            # If a config was provided, update its weather parameter
+            if config is not None:
+                config.weather = preset
+                print(f"\033[1m> Updated scenario config with new weather preset\033[0m")
+            
+            # Verify weather was set by getting it again
+            new_weather = self.world.get_weather()
+            
+            # Find a more readable name if available
+            # (No need for WEATHER_PRESET_NAMES mapping here as we already have display names)
+            print(f"\033[1m> Setting weather to preset: {preset_name}\033[0m")
+            print(f"\033[1m> After change - new weather values: cloudiness={new_weather.cloudiness}, precipitation={new_weather.precipitation}\033[0m")
+            
+            # Force a world tick to apply weather changes
+            self.world.tick()
+            
+        except Exception as e:
+            print(f"\033[91mError setting weather preset: {e}\033[0m")
 
     def _register_statistics(self, config, checkpoint, entry_status, crash_message=""):
         """
@@ -314,6 +399,10 @@ class LeaderboardEvaluator(object):
         try:
             self._load_and_wait_for_world(args, config.town, config.ego_vehicles)
             self._prepare_ego_vehicles(config.ego_vehicles, False)
+            
+            # Set weather preset and update the config.weather directly
+            self._set_random_weather_preset(config, args.weather_preset if hasattr(args, 'weather_preset') else None)
+            
             scenario = RouteScenario(world=self.world, config=config, debug_mode=args.debug)
             self.statistics_manager.set_scenario(scenario.scenario)
 
@@ -348,6 +437,7 @@ class LeaderboardEvaluator(object):
 
         # Run the scenario
         try:
+            # No need to set weather here again as we've already modified the config directly
             self.manager.run_scenario()
 
         except AgentError as e:
@@ -438,6 +528,8 @@ def main():
                         help='Use CARLA recording feature to create a recording of the scenario')
     parser.add_argument('--timeout', default="60.0",
                         help='Set the CARLA client timeout value in seconds')
+    parser.add_argument('--weather-preset', type=str, default=None,
+                        help='Weather preset to use (e.g., ClearNoon, CloudyNoon, WetNoon). Random if not specified.')
 
     # simulation setup
     parser.add_argument('--routes',

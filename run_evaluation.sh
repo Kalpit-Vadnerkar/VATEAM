@@ -9,6 +9,7 @@ PORT=2000
 TIMEOUT=60
 OUTPUT_DIR="results"
 AGENT_PATH="src/compatibility/leaderboard_eval.py"
+WEATHER_PRESET="HardRainNoon"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -59,6 +60,10 @@ while [[ $# -gt 0 ]]; do
             AGENT_PATH="$2"
             shift 2
             ;;
+        --weather-preset)
+            WEATHER_PRESET="$2"
+            shift 2
+            ;;
         *)
             echo "Unknown argument: $1"
             exit 1
@@ -82,6 +87,12 @@ if ! pgrep -x "CarlaUE4" > /dev/null; then
     sleep 10
 fi
 
+# Build the weather preset parameter if provided
+WEATHER_PARAM=""
+if [ -n "$WEATHER_PRESET" ]; then
+    WEATHER_PARAM="--weather-preset=${WEATHER_PRESET}"
+fi
+
 # Run the leaderboard evaluation directly
 python3 "${LEADERBOARD_ROOT}/leaderboard/leaderboard_evaluator_local.py" \
     --scenarios="${SCENARIOS}" \
@@ -94,7 +105,8 @@ python3 "${LEADERBOARD_ROOT}/leaderboard/leaderboard_evaluator_local.py" \
     --debug=0 \
     --resume=0 \
     --port="${PORT}" \
-    --timeout="${TIMEOUT}"
+    --timeout="${TIMEOUT}" \
+    ${WEATHER_PARAM}
 
 # Kill CARLA server if we started it
 if [ "$KILL_CARLA_ON_EXIT" = true ] && pgrep -x "CarlaUE4" > /dev/null; then
